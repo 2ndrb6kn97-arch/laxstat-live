@@ -1,0 +1,542 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LaxStat Live</title>
+<style>
+:root{
+  --bg:#f4f7fb; --card:#fff; --text:#132033; --muted:#5f7188; --line:#d7e1ee;
+  --blue:#1e3a8a; --blue2:#1e40af; --green:#16a34a; --red:#dc2626; --shadow:0 10px 28px rgba(16,24,40,.08); --radius:18px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:900px;margin:0 auto;padding:14px 12px 32px}
+.hero{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border-radius:24px;padding:14px;box-shadow:var(--shadow);position:sticky;top:0;z-index:10}
+.hero h1{margin:0 0 10px;font-size:1.2rem;text-align:center}
+.scoregrid{display:grid;grid-template-columns:1fr 56px 1fr;gap:10px;align-items:center}
+.teambox{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:16px;padding:12px;min-height:90px}
+.teamname{font-weight:800;font-size:1.02rem;margin-bottom:6px}
+.score{font-size:2rem;font-weight:900;line-height:1}
+.vs{text-align:center;font-weight:900;font-size:1rem}
+.heroMeta{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.heroMeta div{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:9px 10px;font-size:.82rem}
+.heroMeta b{display:block;font-size:.72rem;margin-bottom:4px;opacity:.85}
+.section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-top:14px}
+h2{margin:0 0 10px;font-size:1.04rem}
+.help{color:var(--muted);font-size:.87rem;margin-top:-4px;margin-bottom:10px}
+.grid2,.grid3,.grid4{display:grid;gap:10px}
+.grid2{grid-template-columns:repeat(2,1fr)}
+.grid3{grid-template-columns:repeat(3,1fr)}
+.grid4{grid-template-columns:repeat(4,1fr)}
+label{display:block;font-size:.83rem;font-weight:700;margin-bottom:6px}
+input, select, textarea, button{font:inherit}
+input, select, textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px;color:var(--text)}
+textarea{min-height:90px;resize:vertical}
+button{border:none;border-radius:12px;padding:12px 14px;font-weight:800;cursor:pointer}
+.primary{background:var(--blue); color:#fff}
+.secondary{background:#e8efff; color:#1d4ed8}
+.success{background:#e9f8ee; color:#166534}
+.danger{background:#fee2e2; color:#991b1b}
+.ghost{background:#f1f5f9; color:#334155}
+.toolbar,.compactToolbar{display:flex;gap:8px;flex-wrap:wrap}
+.toolbar>*{flex:1 1 auto}
+.statcards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.statcard{border:1px solid var(--line);background:#fbfcff;border-radius:14px;padding:10px}
+.statcard b{display:block;font-size:.75rem;text-transform:uppercase;color:#506175;margin-bottom:5px}
+.statcard span{font-size:1.2rem;font-weight:900}
+.playerCard,.eventCard{border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:8px;background:#fff}
+.rowTop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.small{font-size:.82rem;color:var(--muted)}
+.badge{display:inline-block;padding:3px 8px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:.72rem;font-weight:800;margin-left:4px}
+.quarterWrap{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.quarterCard{border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center;background:#fff}
+.quarterCard.active{background:#dbeafe;border-color:#93c5fd}
+.stickyActions{position:sticky;bottom:8px;z-index:15;margin-top:14px}
+.stickyCard{background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);border-radius:18px;padding:10px}
+@media (max-width:720px){
+  .grid4,.grid3,.grid2,.heroMeta,.quarterWrap,.statcards{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:430px){
+  .scoregrid{grid-template-columns:1fr 40px 1fr}
+  .score{font-size:1.7rem}
+}
+</style>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e3a8a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="LaxStat Live">
+
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>LaxStat Live</h1>
+    <div class="scoregrid">
+      <div class="teambox">
+        <div class="teamname" id="displayHomeTeam">Home Team</div>
+        <div class="score" id="displayHomeScore">0</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="teambox" style="text-align:right">
+        <div class="teamname" id="displayAwayTeam">Visitor</div>
+        <div class="score" id="displayAwayScore">0</div>
+      </div>
+    </div>
+    <div class="heroMeta">
+      <div><b>Quarter</b><span id="displayQuarterMeta">Q1</span></div>
+      <div><b>Date</b><span id="displayDateMeta">—</span></div>
+      <div><b>Place</b><span id="displayPlace">—</span></div>
+      <div><b>Time</b><span id="displayTime">—</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Game Setup</h2>
+    <div class="help">Everything updates live as you type.</div>
+    <div class="grid2">
+      <div><label>Home Team</label><input id="homeTeam" placeholder="Wayne Panthers"></div>
+      <div><label>Visiting Team</label><input id="awayTeam" placeholder="Opponent"></div>
+      <div><label>Date</label><input id="gameDate" type="date"></div>
+      <div><label>Time</label><input id="gameTime" type="time"></div>
+      <div><label>Place</label><input id="gamePlace" placeholder="Field, town, or venue"></div>
+      <div><label>Current Quarter</label>
+        <select id="currentQuarter">
+          <option value="1">1st Quarter</option>
+          <option value="2">2nd Quarter</option>
+          <option value="3">3rd Quarter</option>
+          <option value="4">4th Quarter</option>
+          <option value="OT">OT</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Live Score</h2>
+    <div class="grid2">
+      <div>
+        <label>Home Score</label>
+        <div class="compactToolbar">
+          <button class="secondary" type="button" onclick="changeScore('home',-1)">-1</button>
+          <button class="primary" type="button" onclick="changeScore('home',1)">+1</button>
+        </div>
+      </div>
+      <div>
+        <label>Visitor Score</label>
+        <div class="compactToolbar">
+          <button class="secondary" type="button" onclick="changeScore('away',-1)">-1</button>
+          <button class="primary" type="button" onclick="changeScore('away',1)">+1</button>
+        </div>
+      </div>
+    </div>
+    <div class="toolbar" style="margin-top:10px">
+      <button class="danger" type="button" onclick="clearTrackerNow()">Clear All</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Team Totals</h2>
+    <div class="statcards">
+      <div class="statcard"><b>Goals</b><span id="totalGoals">0</span></div>
+      <div class="statcard"><b>Assists</b><span id="totalAssists">0</span></div>
+      <div class="statcard"><b>Shots</b><span id="totalShots">0</span></div>
+      <div class="statcard"><b>Ground Balls</b><span id="totalGB">0</span></div>
+      <div class="statcard"><b>Saves</b><span id="totalSaves">0</span></div>
+      <div class="statcard"><b>Penalties</b><span id="totalPenalties">0</span></div>
+      <div class="statcard"><b>Clears</b><span id="totalClears">0 / 0</span></div>
+      <div class="statcard"><b>Faceoffs</b><span id="totalFaceoffs">0 / 0</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Quarter Breakdown</h2>
+    <div class="quarterWrap" id="quarterWrap"></div>
+  </div>
+
+  <div class="section">
+    <h2>Player Totals</h2>
+    <div class="small" id="rosterCount" style="margin-bottom:8px"></div>
+    <div class="help">Tap the buttons under each player for fast sideline stat entry.</div>
+    <div id="playerStatsList"></div>
+  </div>
+
+  <div class="section">
+    <h2>Recent Events</h2>
+    <div id="eventsList"></div>
+  </div>
+
+  <div class="section">
+    <h2>Coach Notes</h2>
+    <textarea id="coachNotes" placeholder="Game notes, matchups, rides, man-up notes, timeout reminders..."></textarea>
+  </div>
+
+  <div class="stickyActions">
+    <div class="stickyCard">
+      <div class="toolbar">
+        <button class="danger" type="button" onclick="clearTrackerNow()">Clear All</button>
+        <button class="success" type="button" onclick="downloadCSV()">Export CSV</button>
+        <button class="secondary" type="button" onclick="downloadJSON()">Export Backup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = "laxstat_live_rebuilt_v2";
+
+const DEFAULT_PLAYERS = [
+  {id:"p1", number:"33", name:"Aaron Sullivan", position:"Defense"},
+  {id:"p2", number:"18", name:"Adrian Gojic", position:"Midfield"},
+  {id:"p3", number:"30", name:"Aidan Wyatt", position:"Midfield"},
+  {id:"p4", number:"13", name:"Angelo Armando", position:"Midfield"},
+  {id:"p5", number:"1", name:"Austin Adamo", position:"Attack"},
+  {id:"p6", number:"77", name:"Avery Wentink", position:"Defense"},
+  {id:"p7", number:"23", name:"Casey Glenn", position:"Defense"},
+  {id:"p8", number:"4", name:"Chase Mayorga", position:"Attack"},
+  {id:"p9", number:"3", name:"Darren Freaney", position:"Defense"},
+  {id:"p10", number:"57", name:"Eddie Rodzen", position:"Attack"},
+  {id:"p11", number:"24", name:"Greyson Bennett", position:"Defense"},
+  {id:"p12", number:"6", name:"Jackson Dzioba", position:"Midfield"},
+  {id:"p13", number:"2", name:"Jon Mazzei", position:"Goalie"},
+  {id:"p14", number:"66", name:"Kaito Wichterman", position:"Attack"},
+  {id:"p15", number:"14", name:"Luke Jaeger", position:"Midfield"},
+  {id:"p16", number:"7", name:"Mason Amoroso", position:"Goalie"},
+  {id:"p17", number:"97", name:"Nicholas Onnembo", position:"Attack"},
+  {id:"p18", number:"99", name:"Nicholas Outwater", position:"FOSO/Midfield"},
+  {id:"p19", number:"5", name:"Nicholas Alviano", position:"Midfield"},
+  {id:"p20", number:"45", name:"Robby Odell", position:"LSM"},
+  {id:"p21", number:"32", name:"Sean Rooney", position:"Attack"},
+  {id:"p22", number:"56", name:"Vincent Nourse", position:"Defense"},
+  {id:"p23", number:"00", name:"AM Imbruglia", position:"Midfield"},
+  {id:"p24", number:"22", name:"Logan Michno", position:"Midfield"}
+];
+
+const state = {
+  game: {homeTeam:"", awayTeam:"", date:"", time:"", place:"", quarter:"1", homeScore:0, awayScore:0, notes:""},
+  players: JSON.parse(JSON.stringify(DEFAULT_PLAYERS)),
+  events: []
+};
+
+function $(id){ return document.getElementById(id); }
+
+function loadSaved(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(!raw) return;
+  try{
+    const parsed = JSON.parse(raw);
+    if(parsed.game) state.game = parsed.game;
+    if(Array.isArray(parsed.events)) state.events = parsed.events;
+  }catch(e){ console.error(e); }
+}
+
+function saveNow(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({game:state.game, events:state.events}));
+}
+
+function bindLiveInputs(){
+  ["homeTeam","awayTeam","gameDate","gameTime","gamePlace","currentQuarter","coachNotes"].forEach(id=>{
+    $(id).addEventListener("input", syncGame);
+    $(id).addEventListener("change", syncGame);
+  });
+}
+
+function syncGame(){
+  state.game.homeTeam = $("homeTeam").value.trim();
+  state.game.awayTeam = $("awayTeam").value.trim();
+  state.game.date = $("gameDate").value;
+  state.game.time = $("gameTime").value;
+  state.game.place = $("gamePlace").value.trim();
+  state.game.quarter = $("currentQuarter").value;
+  state.game.notes = $("coachNotes").value;
+  saveNow();
+  renderAll();
+}
+
+function populateInputs(){
+  $("homeTeam").value = state.game.homeTeam || "";
+  $("awayTeam").value = state.game.awayTeam || "";
+  $("gameDate").value = state.game.date || "";
+  $("gameTime").value = state.game.time || "";
+  $("gamePlace").value = state.game.place || "";
+  $("currentQuarter").value = state.game.quarter || "1";
+  $("coachNotes").value = state.game.notes || "";
+}
+
+function renderHeader(){
+  $("displayHomeTeam").textContent = state.game.homeTeam || "Home Team";
+  $("displayAwayTeam").textContent = state.game.awayTeam || "Visitor";
+  $("displayHomeScore").textContent = state.game.homeScore || 0;
+  $("displayAwayScore").textContent = state.game.awayScore || 0;
+  $("displayQuarterMeta").textContent = state.game.quarter === "OT" ? "OT" : `Q${state.game.quarter || "1"}`;
+  $("displayPlace").textContent = state.game.place || "—";
+
+  if(state.game.date){
+    const [yy,mm,dd] = state.game.date.split("-");
+    $("displayDateMeta").textContent = `${mm}/${dd}/${yy.slice(-2)}`;
+  } else {
+    $("displayDateMeta").textContent = "—";
+  }
+
+  if(state.game.time){
+    const [h,m] = state.game.time.split(":");
+    let hour = parseInt(h,10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12;
+    $("displayTime").textContent = `${hour}:${m} ${ampm}`;
+  } else {
+    $("displayTime").textContent = "—";
+  }
+}
+
+function changeScore(side, delta){
+  if(side === "home") state.game.homeScore = Math.max(0, state.game.homeScore + delta);
+  else state.game.awayScore = Math.max(0, state.game.awayScore + delta);
+  saveNow();
+  renderAll();
+}
+
+function safeText(v){
+  return String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+
+function getPlayer(id){
+  return state.players.find(p => p.id === id);
+}
+
+function statsForPlayer(id){
+  const s = {goals:0, assists:0, points:0, shots:0, gbs:0, saves:0, pens:0};
+  state.events.forEach(e=>{
+    if(e.playerId !== id) return;
+    if(e.type === "goal"){ s.goals++; s.points++; }
+    if(e.type === "assist"){ s.assists++; s.points++; }
+    if(e.type === "shot") s.shots++;
+    if(e.type === "groundball") s.gbs++;
+    if(e.type === "save") s.saves++;
+    if(e.type === "penalty") s.pens++;
+  });
+  return s;
+}
+
+function quickStat(playerId, type){
+  const player = getPlayer(playerId);
+  if(!player) return;
+  state.events.unshift({
+    id:"e_" + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    type, playerId,
+    quarter: state.game.quarter || "1",
+    side:"home"
+  });
+  if(type === "goal") state.game.homeScore += 1;
+  saveNow();
+  renderAll();
+}
+
+function deleteEvent(id){
+  const ev = state.events.find(e => e.id === id);
+  if(!ev) return;
+  if(ev.type === "goal"){
+    if(ev.side === "home") state.game.homeScore = Math.max(0, state.game.homeScore - 1);
+    else state.game.awayScore = Math.max(0, state.game.awayScore - 1);
+  }
+  state.events = state.events.filter(e => e.id !== id);
+  saveNow();
+  renderAll();
+}
+
+function eventName(type){
+  return {
+    goal:"Goal", assist:"Assist", shot:"Shot", groundball:"Ground Ball", save:"Save",
+    penalty:"Penalty", clearWon:"Clear Won", clearLost:"Clear Failed", faceoffWon:"Faceoff Won", faceoffLost:"Faceoff Lost"
+  }[type] || type;
+}
+
+function totalsForQuarter(q){
+  const t = {homeGoals:0, awayGoals:0, shots:0, gbs:0};
+  state.events.forEach(e=>{
+    if(e.quarter !== q) return;
+    if(e.type === "goal"){ if(e.side === "home") t.homeGoals++; else t.awayGoals++; }
+    if(e.side === "home"){
+      if(e.type === "shot") t.shots++;
+      if(e.type === "groundball") t.gbs++;
+    }
+  });
+  return t;
+}
+
+function teamTotals(){
+  const total = {goals:0, assists:0, shots:0, gbs:0, saves:0, penalties:0, clearWon:0, clearLost:0, foWon:0, foLost:0};
+  state.events.forEach(e=>{
+    if(e.side !== "home") return;
+    if(e.type === "goal") total.goals++;
+    if(e.type === "assist") total.assists++;
+    if(e.type === "shot") total.shots++;
+    if(e.type === "groundball") total.gbs++;
+    if(e.type === "save") total.saves++;
+    if(e.type === "penalty") total.penalties++;
+    if(e.type === "clearWon") total.clearWon++;
+    if(e.type === "clearLost") total.clearLost++;
+    if(e.type === "faceoffWon") total.foWon++;
+    if(e.type === "faceoffLost") total.foLost++;
+  });
+  return total;
+}
+
+function renderTotals(){
+  const t = teamTotals();
+  $("totalGoals").textContent = t.goals;
+  $("totalAssists").textContent = t.assists;
+  $("totalShots").textContent = t.shots;
+  $("totalGB").textContent = t.gbs;
+  $("totalSaves").textContent = t.saves;
+  $("totalPenalties").textContent = t.penalties;
+  $("totalClears").textContent = `${t.clearWon} / ${t.clearWon + t.clearLost}`;
+  $("totalFaceoffs").textContent = `${t.foWon} / ${t.foWon + t.foLost}`;
+}
+
+function renderQuarterCards(){
+  $("quarterWrap").innerHTML = ["1","2","3","4","OT"].map(q=>{
+    const t = totalsForQuarter(q);
+    return `<div class="quarterCard ${state.game.quarter===q ? "active":""}">
+      <div><b>${q==="OT" ? "OT" : "Q"+q}</b></div>
+      <div class="small">${t.homeGoals}-${t.awayGoals}</div>
+      <div class="small">S ${t.shots} · GB ${t.gbs}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderPlayerStats(){
+  $("rosterCount").textContent = `Players loaded: ${state.players.length}`;
+  $("playerStatsList").innerHTML = state.players.map(p=>{
+    const s = statsForPlayer(p.id);
+    const lower = p.name.toLowerCase();
+    const isOutwater = lower === "nicholas outwater";
+    const isGoalieOnly = lower === "mason amoroso" || lower === "jon mazzei";
+
+    let foW = 0, foL = 0, clW = 0, clL = 0;
+    state.events.forEach(e=>{
+      if(e.playerId !== p.id) return;
+      if(e.type === "faceoffWon") foW++;
+      if(e.type === "faceoffLost") foL++;
+      if(e.type === "clearWon") clW++;
+      if(e.type === "clearLost") clL++;
+    });
+
+    let statBits = [];
+    let buttons = "";
+
+    if(isGoalieOnly){
+      statBits = [`Saves ${s.saves}`, `Clears ${clW}/${clW+clL}`, `Pen ${s.pens}`];
+      buttons = `
+        <div class="compactToolbar" style="margin-top:8px">
+          <button class="primary" type="button" onclick="quickStat('${p.id}','save')">Save</button>
+          <button class="success" type="button" onclick="quickStat('${p.id}','clearWon')">Clear Won</button>
+          <button class="danger" type="button" onclick="quickStat('${p.id}','clearLost')">Clear Failed</button>
+          <button class="danger" type="button" onclick="quickStat('${p.id}','penalty')">Pen</button>
+        </div>`;
+    } else {
+      statBits = [`G ${s.goals}`, `A ${s.assists}`, `P ${s.points}`, `Shots ${s.shots}`, `GB ${s.gbs}`];
+      if(isOutwater) statBits.push(`FO ${foW}/${foW+foL}`);
+      statBits.push(`Pen ${s.pens}`);
+      buttons = `
+        <div class="compactToolbar" style="margin-top:8px">
+          <button class="ghost" type="button" onclick="quickStat('${p.id}','shot')">Shot</button>
+          <button class="primary" type="button" onclick="quickStat('${p.id}','goal')">Goal</button>
+          <button class="success" type="button" onclick="quickStat('${p.id}','groundball')">GB</button>
+          <button class="secondary" type="button" onclick="quickStat('${p.id}','assist')">Asst</button>
+          <button class="danger" type="button" onclick="quickStat('${p.id}','penalty')">Pen</button>
+        </div>`;
+      if(isOutwater){
+        buttons += `
+          <div class="compactToolbar" style="margin-top:8px">
+            <button class="primary" type="button" onclick="quickStat('${p.id}','faceoffWon')">Faceoff Won</button>
+            <button class="danger" type="button" onclick="quickStat('${p.id}','faceoffLost')">Faceoff Lost</button>
+          </div>`;
+      }
+    }
+
+    return `<div class="playerCard">
+      <div><b>#${safeText(p.number)} ${safeText(p.name)}</b> <span class="badge">${safeText(p.position)}</span></div>
+      <div class="small" style="margin-top:4px">${statBits.join(" · ")}</div>
+      ${buttons}
+    </div>`;
+  }).join("");
+}
+
+function renderEvents(){
+  $("eventsList").innerHTML = state.events.length ? state.events.map(e=>{
+    const p = getPlayer(e.playerId);
+    return `<div class="eventCard">
+      <div class="rowTop">
+        <div><b>${eventName(e.type)}</b> <span class="badge">${e.quarter === "OT" ? "OT" : "Q"+e.quarter}</span></div>
+        <div><button class="danger" type="button" onclick="deleteEvent('${e.id}')">Delete</button></div>
+      </div>
+      <div class="small" style="margin-top:4px">${p ? "#" + safeText(p.number) + " " + safeText(p.name) : "Team"} · ${e.side === "home" ? "Home" : "Visitor"}</div>
+    </div>`;
+  }).join("") : '<div class="small">No events yet.</div>';
+}
+
+function renderAll(){
+  populateInputs();
+  renderHeader();
+  renderTotals();
+  renderQuarterCards();
+  renderPlayerStats();
+  renderEvents();
+}
+
+function clearTrackerNow(){
+  state.game = {homeTeam:"", awayTeam:"", date:"", time:"", place:"", quarter:"1", homeScore:0, awayScore:0, notes:""};
+  state.events = [];
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e){ console.error(e); }
+  renderAll();
+}
+
+function csvCell(v){
+  const s = String(v ?? "");
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+}
+function baseName(){
+  const home = (state.game.homeTeam || "home").replace(/\s+/g,"_");
+  const away = (state.game.awayTeam || "visitor").replace(/\s+/g,"_");
+  const date = state.game.date || "game";
+  return "laxstat_live_" + home + "_vs_" + away + "_" + date;
+}
+function downloadBlob(content, name, mime){
+  const blob = new Blob([content], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function downloadCSV(){
+  const rows = [["Section","Field","Value"],["Game","Home Team",state.game.homeTeam],["Game","Visitor Team",state.game.awayTeam],["Game","Date",state.game.date],["Game","Time",state.game.time],["Game","Place",state.game.place],["Game","Quarter",state.game.quarter],["Game","Home Score",state.game.homeScore],["Game","Visitor Score",state.game.awayScore],[],["Roster"],["#","Name","Position","Goals","Assists","Points","Shots","Ground Balls","Saves","Penalties"]];
+  state.players.forEach(p=>{ const s = statsForPlayer(p.id); rows.push([p.number,p.name,p.position,s.goals,s.assists,s.points,s.shots,s.gbs,s.saves,s.pens]); });
+  rows.push([],["Events"],["Quarter","Side","Type","Player #","Player Name"]);
+  [...state.events].reverse().forEach(e=>{ const p = getPlayer(e.playerId) || {}; rows.push([e.quarter,e.side,eventName(e.type),p.number||"",p.name||""]); });
+  downloadBlob(rows.map(r=>(r||[]).map(csvCell).join(",")).join("\n"), baseName()+".csv", "text/csv;charset=utf-8;");
+}
+function downloadJSON(){ downloadBlob(JSON.stringify({game:state.game,players:state.players,events:state.events}, null, 2), baseName()+".json", "application/json"); }
+
+window.addEventListener("load", ()=>{
+  loadSaved();
+  bindLiveInputs();
+  renderAll();
+});
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').catch(function(err) {
+      console.log('Service worker registration failed:', err);
+    });
+  });
+}
+</script>
+
+</body>
+</html>
